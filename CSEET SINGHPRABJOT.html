@@ -1,0 +1,894 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Course Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #1f2937;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --hover-color: #f8fafc;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .batch-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 0 8px;
+        }
+
+        .batch-thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: var(--bg-color);
+            flex-shrink: 0;
+        }
+
+        .batch-title {
+            flex-grow: 1;
+        }
+
+        .batch-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .search-container {
+            position: relative;
+            margin: 0 8px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .content-list {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            touch-action: pan-y pinch-zoom;
+            display: flex;
+            align-items: center;
+        }
+
+        .content-card a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            pointer-events: none;
+            flex-grow: 1;
+        }
+
+        .content-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .video-card .content-icon::before {
+            content: "▶";
+        }
+
+        .pdf-card .content-icon::before {
+            content: "📄";
+        }
+
+        .play-button {
+            position: absolute;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        @media (hover: hover) {
+            .content-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .content-card a:hover {
+                color: var(--primary-color);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-card {
+                margin: 0 4px;
+            }
+
+            .content-card:active {
+                background: var(--hover-color);
+                transform: scale(0.98);
+            }
+        }
+
+        .player-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 1000;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .player-container.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .player-wrapper {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-player {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            width: 40px;
+            height: 40px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 24px;
+            z-index: 1001;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            border: none;
+        }
+
+        @media (orientation: landscape) {
+            .player-wrapper {
+                padding: 0 48px;
+            }
+            
+            iframe {
+                max-height: 90vh;
+                width: auto;
+                aspect-ratio: 16/9;
+            }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 24px;
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1002;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) {
+            .search-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .content-card {
+                padding: 0;
+            }
+
+            .content-card a {
+                padding: 16px;
+                min-height: 60px;
+                display: flex;
+                align-items: center;
+            }
+
+            .video-card::after {
+                font-size: 18px;
+                right: 12px;
+            }
+        }
+
+        /* iOS Safari specific styles */
+        @supports (-webkit-touch-callout: none) {
+            .player-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: -webkit-fill-available;
+            }
+
+            .close-player {
+                top: max(16px, env(safe-area-inset-top));
+                right: max(16px, env(safe-area-inset-right));
+            }
+        }
+
+        /* Pull to refresh disable */
+        body {
+            overscroll-behavior-y: contain;
+        }
+
+        /* Sticky header improvements */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            margin: -12px -12px 16px -12px;
+            border-radius: 0;
+            padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-color: #e5e7eb;
+                --bg-color: #111827;
+                --card-bg: #1f2937;
+                --border-color: #374151;
+                --hover-color: #374151;
+            }
+
+            .loading {
+                background: rgba(31, 41, 55, 0.9);
+            }
+
+            .player-container {
+                background: rgba(0, 0, 0, 0.98);
+            }
+
+            .batch-thumbnail {
+                border: 1px solid var(--border-color);
+            }
+        }
+    </style>
+<script defer data-domain="hrxcseetlecture.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script></head>
+<body>
+
+ <div style="margin-top: 20px; font-size: 18px; text-align: center;">
+  Extracted by - <a href="https://t.me/CaAspirants2025" target="_blank"><strong>@SINGHPRABJOT</strong></a>
+ </div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="batch-info">
+                <img src="BATCH_THUMBNAIL" alt="" class="batch-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\' viewBox=\'0 0 24 24\'%3E%3Cpath fill=\'%23e5e7eb\' d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z\'/%3E%3C/svg%3E'">
+                <div class="batch-title">
+                    <h1>ClassPlus Course Content (🎬 Videos: 54 | 📄 PDFs: 0)</h1>
+                </div>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search content..." id="searchInput">
+            </div>
+        </div>
+        <div class="content-list">
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="content-grid" id="contentGrid">
+                
+                <div class="content-card video-card">
+                    <a>Introduction</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/fc38e8c69fc64ba2a661677335dd9a00-07/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 1 Constitution of India</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/6f8c7205db2648fe9c18ee1f3206f056-t2/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 2A Indian Contract Act 1872</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/25f3531eb7ba4ed59c25e5ce3b24b545-dm/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 2B Law of Torts</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/03f53176f7a048a69430524d475e3e08-6d/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 3 Elements of CS Regulation</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/ef1a3c6fc10947be92451f99e45cbb31-bh/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 4  Elements of Company Law</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/ac19f95e932842dfaee7d306cc43c538-qs/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 5 Legal Reasoning</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/c486a1c18f7b40e1b4b84f9ee07f0c2f-od/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 1 - Theory of Demand and Supply _ CSEET _ Economics</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/ALUvZnbV/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 2 - National Income Accounting And Related Concepts _ CSEET _ Economics (1)</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/WHV5OVy8/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 3 - Indian Union Budget _ Economics & Business Environment _ CSEET</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/7ZEDIDSi/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LESSON 4 - INDIAN FINANCIAL MARKETS _ CSEET _ Economic & Business Environment _  (1)</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/JBHgDaYv/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 5 - Indian Economy _ CSEET _ Full Chapter covered</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/cXkKHQxZ/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 6 - Entrepreneurship Scenario _ Economics _ CSEET</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/UIOveAtb/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 7- Business Environment _ CSEET _ Economics</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/wMExKEoV/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson 8 - Key Governmental Institutions _ CSEET _ Economics (1)</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/b08bad9ff8d969639b2e43d5769342cc62b510c4345d2f7f153bec53be84fe35/lPwXzNRU/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>CSEET BUSINESS COMMUNICATION MARATHON _ FULL SYLLABUS COVERED _ IN ENGLISH</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/b81552764604419d8c453ac3024ce9a1-xi/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Introduction</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/ec76f54159ce46a980c194a020bca361-nw/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 1-Number test and Number Series</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/c794b3062429434794ecb97075c0f4c7-9k/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 2-Sequence and Series</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/6ccdd32727b64290bd7b80b5ea95c28c-lx/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 3-Mirror Image</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/d2537d16e996458ca0e0cd99dd1cb46d-0v/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 4-Coding Decoding -Part 1 Combined</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/821cb6ca25f34c1cb139518cd573283d-jd/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 4-Coding Decoding Part 2</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/8bef3f36515d472081c5b4e7e9e96a7b-sq/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 5-Alphabet Test and Alphabet Series</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/314e8f6660a8444cb4138ca95384a681-qi/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 6-Alpha Numeric Sequence Puzzle</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/311eb8a12278485687f26a1f81339449-ur/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 7-Analogy</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/bca2c2888b9f4d62bfda947659ae3ef0-37/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 8-Logical Sequence Test</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/6c75e6c3250849a485d1eed7f5ee2ca9-hr/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR- Topic 9-Classification</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/08361555afdd4422a23250495a0647bb-wm/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 10-Insert Missing Characters</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/9f3a9c2b5c4f4078b7ecac5f0e3f2d87-li/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 11-Blood Relations</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/6b6de568baa641af9b43357eb34d425e-hc/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 12-Logical Venn Diagram</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/60d94fe17a0c41198734937c06d3f4fb-um/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 13-Syloogism</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/590075467c3d4585ae6191f4b8983293-59/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 14-Calendars</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/2a4d535211b54252815bc4545387b996-2w/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 15-Clocks</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/27bf4b9258e843a8af9e18582a68e135-s5/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 16-Cause and Effect Reasoning</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/8ba723b263044cd6ba93875623c6f51c-it/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 17-Statement and Assumption</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/2d009f975bb540189ba3b1a744426a6a-8s/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 18-Assertion and Reason</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/f7f922b056d940c6823a3998fded92a8-bb/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 19-Deriving Conclusion from Passage and Drawing Inference</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/14b416b1ade648b383aa09bd113d45b7-c3/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 20-Analytical Reasoning</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/7e1a0b3b02514ba7baa429f4001bccb4-28/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 21 Completion of Incomeplete Patterns</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/aa41f7c10883471a8ff4669a46782f19-14/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 22-Figure Matrix</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/38edd5464a074380a64c2f567b0596db-xd/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 23-Grouping of Identical Figures</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/0889fbf548a34b9b82fedf10f1335eb9-cw/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 24-Number Ranking and Time Sequence Test</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/7a127fefffba4fbba1872cbc07c2531d-fh/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>LR-Topic 25-Rule Detection</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/e0cf972f1a2b4f8f81404b706819a1ee-lt/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Number System Part 1</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/b2ec1a980af04b89adad6c7f50f2a382-b1/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Number System Part 2</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/0a33efc908c64758b5274c6d0628f742-r2/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Number System Part 3</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/d386b2decbf840aa9914c288fc706bef-7i/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Lesson Fundamental of Arithmetical Operations</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/alisg-cdn-a.classplusapp.com/5d76d8d0765d71eebfc35401b1ea0102/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Part 1-Basic Operations</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/bae4d93b92334678ac92e2e123795006-2j/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Part2-Percentage</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/7652fa50a85e4113a2913828b33a474f-49/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>PArt3-Ratio and Proportion</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/794ffe86cdfa42aba0f4a0b6abc2e407-q0/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Part4-Sqaure Root</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/06d179de300c4779a44f214d55beb0c6-bh/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Part5-Average</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/ef19b8ecf9da4539b6dbf3d0e6a93dcf-fp/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>Part6-Interest</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/e3c254e335f64ebe9004f35003c50716-r4/master.m3u8")'>▶</div>
+                </div>
+
+                <div class="content-card video-card">
+                    <a>PArt7-Profit and Loss</a>
+                    <div class="play-button" onclick='playVideo("https://media-cdn.classplusapp.com/12845/cc/53bbdc5cb98043308d7df974080ce7da-jt/master.m3u8")'>▶</div>
+                </div>
+            </div>
+            <div class="no-results" id="noResults" style="display: none;">
+                No matching content found
+            </div>
+        </div>
+    </div>
+    <div class="player-container" id="playerContainer">
+        <div class="player-wrapper">
+            <div class="close-player" onclick="closePlayer()">×</div>
+            <iframe id="videoPlayer" allowfullscreen allow="autoplay; fullscreen"></iframe>
+        </div>
+    </div>
+    <script>
+        // Prevent scrolling issues
+        let touchStartY = 0;
+        let touchEndY = 0;
+        const minSwipeDistance = 10;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].clientY;
+            const swipeDistance = Math.abs(touchEndY - touchStartY);
+            if (swipeDistance < minSwipeDistance) {
+                const target = e.target;
+                if (target.classList.contains('play-button')) {
+                    const url = target.getAttribute('data-url');
+                    if (url) playVideo(url);
+                }
+            }
+        }, { passive: true });
+
+        // Improved search functionality
+        const searchInput = document.getElementById('searchInput');
+        const contentGrid = document.getElementById('contentGrid');
+        const noResults = document.getElementById('noResults');
+        const contentCards = document.querySelectorAll('.content-card');
+        let searchTimeout;
+
+        function normalizeText(text) {
+            return text.toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s]/g, '');
+        }
+
+        function performSearch() {
+            const searchTerm = normalizeText(searchInput.value);
+            let hasResults = false;
+            let visibleCount = 0;
+
+            contentCards.forEach(card => {
+                const title = normalizeText(card.querySelector('a').textContent);
+                const isMatch = searchTerm === '' || title.includes(searchTerm);
+                
+                if (isMatch) {
+                    card.style.display = 'block';
+                    hasResults = true;
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            noResults.style.display = hasResults ? 'none' : 'block';
+            
+            // Update grid columns based on visible items
+            if (window.innerWidth > 768) {
+                contentGrid.style.gridTemplateColumns = visibleCount === 1 ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))';
+            }
+        }
+
+        // Debounced search with proper cleanup
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performSearch, 150);
+        }
+
+        searchInput.addEventListener('input', debounceSearch);
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                performSearch();
+            }
+        });
+
+        // Initialize content cards
+        document.querySelectorAll('.content-card').forEach(card => {
+            const link = card.querySelector('a');
+            const url = link.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+            if (url) {
+                // Remove the onclick attribute
+                link.removeAttribute('onclick');
+                
+                // Add content icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'content-icon';
+                link.insertBefore(iconDiv, link.firstChild);
+                
+                // Add action button based on content type
+                const actionButton = document.createElement('div');
+                if (url.toLowerCase().endsWith('.pdf')) {
+                    card.classList.add('pdf-card');
+                    actionButton.className = 'play-button';
+                    actionButton.innerHTML = '📄';
+                    actionButton.setAttribute('data-url', url);
+                    actionButton.onclick = () => window.open('https://docs.google.com/viewer?url=' + encodeURIComponent(url), '_blank');
+                } else {
+                    card.classList.add('video-card');
+                    actionButton.className = 'play-button';
+                    actionButton.innerHTML = '▶';
+                    actionButton.setAttribute('data-url', url);
+                    actionButton.onclick = () => playVideo(url);
+                }
+                card.appendChild(actionButton);
+            }
+        });
+
+        function playVideo(url) {
+            const playerContainer = document.getElementById('playerContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const loading = document.getElementById('loading');
+            
+            if (!url) return;
+            
+            loading.classList.add('active');
+            playerContainer.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            videoPlayer.src = 'https://api.extractor.workers.dev/player?url=' + encodeURIComponent(url);
+            videoPlayer.onload = () => {
+                loading.classList.remove('active');
+            };
+
+            history.pushState({ player: 'open' }, '');
+
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(() => {});
+                }
+            } catch (e) {}
+        }
+
+        function closePlayer() {
+            const playerContainer = document.getElementById('playerContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            videoPlayer.src = '';
+            playerContainer.classList.remove('active');
+            document.body.style.overflow = '';
+
+            // Unlock screen orientation if supported
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            } catch (e) {}
+        }
+
+        // Update escape key and back button handlers to only handle video player
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePlayer();
+            }
+        });
+
+        window.addEventListener('popstate', function() {
+            if (document.getElementById('playerContainer').classList.contains('active')) {
+                closePlayer();
+            }
+        });
+
+        // Lazy loading for images/iframes
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyElements = document.querySelectorAll('[data-src]');
+            
+            if ('IntersectionObserver' in window) {
+                const lazyLoad = target => {
+                    const io = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const element = entry.target;
+                                element.src = element.dataset.src;
+                                observer.disconnect();
+                            }
+                        });
+                    });
+                    io.observe(target);
+                };
+                lazyElements.forEach(lazyLoad);
+            } else {
+                // Fallback for older browsers
+                lazyElements.forEach(element => {
+                    element.src = element.dataset.src;
+                });
+            }
+        });
+
+        // Add active state for mobile touches
+        document.querySelectorAll('.content-card').forEach(card => {
+            card.addEventListener('touchstart', function() {
+                this.classList.add('active');
+            });
+            card.addEventListener('touchend', function() {
+                this.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html> 
